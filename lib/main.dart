@@ -6,6 +6,9 @@ import 'screens/add_expense_screen.dart';
 import 'screens/split_bill_screen.dart';
 import 'screens/select_contacts_screen.dart';
 import 'screens/investment_hub_screen.dart';
+import 'screens/analytics_screen.dart';
+import 'screens/wallet_screen.dart';
+import 'screens/profile_screen.dart';
 import 'controllers/navigation_controller.dart';
 
 void main() {
@@ -41,32 +44,53 @@ class MainPage extends StatelessWidget {
       builder: (controller) {
         return Scaffold(
           body: Obx(() => _buildScreen(controller.currentPage.value)),
-          bottomNavigationBar: Obx(() => BottomNavigationBar(
-                currentIndex: controller.currentIndex.value,
-                onTap: (index) => controller.changePage(index),
-                backgroundColor: const Color(0xFF1E293B),
-                selectedItemColor: const Color(0xFF06B6D4),
-                unselectedItemColor: Colors.grey,
-                items: const [
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.home), label: 'Home'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.bar_chart), label: 'Analytics'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.wallet), label: 'Wallet'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.person), label: 'Profile'),
-                ],
-              )),
+          bottomNavigationBar: Obx(
+            () => BottomNavigationBar(
+              currentIndex: controller.currentIndex.value,
+              onTap: (index) {
+                print('Bottom nav tapped: $index');
+                controller.changePage(index);
+              },
+              backgroundColor: const Color(0xFF1E293B),
+              selectedItemColor: const Color(0xFF06B6D4),
+              unselectedItemColor: Colors.grey,
+              type: BottomNavigationBarType.fixed,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.bar_chart),
+                  label: 'Analytics',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.wallet),
+                  label: 'Wallet',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
   Widget _buildScreen(String page) {
+    print('Building screen: $page');
     switch (page) {
       case 'dashboard':
         return const DashboardScreen();
+      case 'analytics':
+        return const AnalyticsScreen();
+      case 'wallet':
+        return const WalletScreen();
+      case 'profile':
+        return const ProfileScreen();
       case 'scanner':
         return const ScannerScreen();
       case 'expense':

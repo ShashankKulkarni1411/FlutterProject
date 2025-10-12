@@ -1,0 +1,456 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/navigation_controller.dart';
+
+class WalletScreen extends StatefulWidget {
+  const WalletScreen({Key? key}) : super(key: key);
+
+  @override
+  State<WalletScreen> createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends State<WalletScreen> {
+  String selectedTab = 'Overview'; // Overview, Insights, Goals
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: const Color(0xFF0F172A),
+        title: const Text("Alex's Wallet"),
+        centerTitle: false,
+        actions: [
+          CircleAvatar(
+            backgroundImage: const NetworkImage(
+              'https://i.pravatar.cc/150?img=3',
+            ),
+            radius: 20,
+          ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Tab Selector
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF334155)),
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: ['Overview', 'Insights', 'Goals'].map((tab) {
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => selectedTab = tab),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: selectedTab == tab
+                              ? const Color(0xFF06B6D4).withOpacity(0.2)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          border: selectedTab == tab
+                              ? Border.all(color: const Color(0xFF06B6D4))
+                              : null,
+                        ),
+                        child: Text(
+                          tab,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: selectedTab == tab
+                                ? const Color(0xFF06B6D4)
+                                : Colors.grey,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            if (selectedTab == 'Overview') ...[
+              // Total Balance Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('Total Balance',
+                            style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        SizedBox(height: 8),
+                        Text('₹25,000',
+                            style: TextStyle(
+                                fontSize: 28, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text('+18%',
+                          style: TextStyle(
+                              color: Color(0xFF10B981),
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Income and Expenses
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF334155)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('Income',
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 11)),
+                          SizedBox(height: 8),
+                          Text('₹45,000',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF334155)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('Expenses',
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 11)),
+                          SizedBox(height: 8),
+                          Text('₹12,500',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFEA580C))),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Smart Wallet Overview
+              const Text('Smart Wallet Overview',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                children: [
+                  _WalletCard(
+                    title: 'Spend This Week',
+                    amount: '₹3,250',
+                    subtitle: '↑8% vs last week',
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Weekly spending details')),
+                    ),
+                  ),
+                  _WalletCard(
+                    title: 'Pending Dues',
+                    amount: '₹1,800',
+                    subtitle: 'Next due: 2 days',
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Pending dues details')),
+                    ),
+                  ),
+                  _WalletCard(
+                    title: 'Top Category',
+                    amount: 'Food & Dining',
+                    subtitle: '₹4,200 this month',
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Top category details')),
+                    ),
+                  ),
+                  _WalletCard(
+                    title: 'Investable Funds',
+                    amount: '₹5,000',
+                    subtitle: '20% of balance',
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Investment options')),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Money Health Score
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: const Color(0xFF8B5CF6), width: 3),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text('78',
+                                style: TextStyle(
+                                    fontSize: 24, fontWeight: FontWeight.bold)),
+                            Text('/100',
+                                style: TextStyle(
+                                    fontSize: 10, color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('Money Health Score',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.bold)),
+                          SizedBox(height: 8),
+                          Text(
+                              'Your financial health is good, but\nthere\'s room for improvement.',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey)),
+                          SizedBox(height: 8),
+                          Text('💡 Reduce dining expenses to\nimprove',
+                              style: TextStyle(
+                                  fontSize: 11, color: Color(0xFF06B6D4))),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (selectedTab == 'Insights') ...[
+              const Text('Insights & Analytics',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    children: const [
+                      Icon(Icons.analytics_outlined,
+                          size: 64, color: Color(0xFF06B6D4)),
+                      SizedBox(height: 16),
+                      Text('Detailed insights coming soon',
+                          style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ),
+            ] else ...[
+              const Text('Savings Goals',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    children: const [
+                      Icon(Icons.flag_outlined,
+                          size: 64, color: Color(0xFF06B6D4)),
+                      SizedBox(height: 16),
+                      Text('Goals management coming soon',
+                          style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+
+            // Recent Transactions
+            if (selectedTab == 'Overview') ...[
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Recent Transactions',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  GestureDetector(
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('View all transactions')),
+                    ),
+                    child: const Text('View All',
+                        style:
+                            TextStyle(color: Color(0xFF06B6D4), fontSize: 12)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _TransactionTile(
+                name: 'Starbucks',
+                time: '10:30 AM',
+                amount: '-₹450',
+                icon: '☕',
+              ),
+              _TransactionTile(
+                name: 'Amazon',
+                time: 'Yesterday',
+                amount: '-₹1,200',
+                icon: '📦',
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WalletCard extends StatelessWidget {
+  final String title;
+  final String amount;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _WalletCard({
+    required this.title,
+    required this.amount,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF334155)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title,
+                style: const TextStyle(color: Colors.grey, fontSize: 11)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(amount,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(subtitle,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TransactionTile extends StatelessWidget {
+  final String name;
+  final String time;
+  final String amount;
+  final String icon;
+
+  const _TransactionTile({
+    required this.name,
+    required this.time,
+    required this.amount,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$name transaction details')),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF334155)),
+        ),
+        child: Row(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text(time,
+                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              ),
+            ),
+            Text(amount,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFEA580C))),
+          ],
+        ),
+      ),
+    );
+  }
+}
