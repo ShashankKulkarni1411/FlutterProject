@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/navigation_controller.dart';
+import '../controllers/settings_controller.dart';
+import 'settings/payment_methods_screen.dart';
+import 'settings/theme_settings_screen.dart';
+import 'settings/currency_settings_screen.dart';
+import 'settings/notification_settings_screen.dart';
+import 'settings/privacy_security_screen.dart';
+import 'settings/help_center_screen.dart';
+import 'settings/contact_support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -13,11 +21,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final navController = Get.find<NavigationController>();
+    final settingsController = Get.find<SettingsController>();
 
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF0F172A),
         title: const Text('Profile'),
         centerTitle: false,
         actions: [
@@ -38,9 +46,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1E293B)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF334155)),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF334155)
+                      : Colors.grey[300]!,
+                ),
               ),
               child: Column(
                 children: [
@@ -49,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     backgroundImage: const NetworkImage(
                       'https://i.pravatar.cc/200?img=3',
                     ),
-                    backgroundColor: const Color(0xFF06B6D4),
+                    backgroundColor: Theme.of(context).primaryColor,
                   ),
                   const SizedBox(height: 16),
                   const Text('Alex Johnson',
@@ -74,31 +88,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.payment_outlined,
               title: 'Payment Methods',
               subtitle: 'Manage your cards and accounts',
-              onTap: () => _navigateToPaymentMethods(context),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PaymentMethodsScreen()),
+              ),
             ),
             _SettingsTile(
               icon: Icons.brightness_4_outlined,
               title: 'Theme',
-              subtitle: 'Dark Mode',
-              onTap: () => _navigateToTheme(context),
+              subtitle: 'Customize app appearance',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ThemeSettingsScreen()),
+              ),
             ),
-            _SettingsTile(
-              icon: Icons.language_outlined,
-              title: 'Currency',
-              subtitle: '₹ (INR)',
-              onTap: () => _navigateToCurrency(context),
+            GetBuilder<SettingsController>(
+              builder: (controller) => _SettingsTile(
+                icon: Icons.language_outlined,
+                title: 'Currency',
+                subtitle:
+                    '${controller.currencySymbol} (${controller.selectedCurrency})',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const CurrencySettingsScreen()),
+                ),
+              ),
             ),
             _SettingsTile(
               icon: Icons.notifications_outlined,
               title: 'Notifications',
               subtitle: 'Manage your alerts',
-              onTap: () => _navigateToNotifications(context),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const NotificationSettingsScreen()),
+              ),
             ),
             _SettingsTile(
               icon: Icons.security_outlined,
               title: 'Privacy & Security',
               subtitle: 'Control your data and permissions',
-              onTap: () => _navigateToPrivacy(context),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PrivacySecurityScreen()),
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -110,13 +147,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.help_outline,
               title: 'Help Center',
               subtitle: 'FAQs and support resources',
-              onTap: () => _navigateToHelpCenter(context),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const HelpCenterScreen()),
+              ),
             ),
             _SettingsTile(
               icon: Icons.message_outlined,
               title: 'Contact Support',
               subtitle: 'Get in touch with us',
-              onTap: () => _navigateToContactSupport(context),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ContactSupportScreen()),
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -126,7 +171,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: ElevatedButton(
                 onPressed: () => _showLogoutDialog(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E293B),
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1E293B)
+                          : Colors.white,
                   side: const BorderSide(color: Color(0xFFDC2626)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -148,60 +196,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _navigateToPaymentMethods(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Payment Methods - Add/Edit Cards')),
-    );
-  }
-
-  void _navigateToTheme(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Theme Settings - Light/Dark Mode')),
-    );
-  }
-
-  void _navigateToCurrency(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Currency Selection')),
-    );
-  }
-
-  void _navigateToNotifications(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Notification Settings')),
-    );
-  }
-
-  void _navigateToPrivacy(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Privacy & Security Settings')),
-    );
-  }
-
-  void _navigateToHelpCenter(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Help Center - FAQs & Resources')),
-    );
-  }
-
-  void _navigateToContactSupport(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Contact Support - Chat/Email/Phone')),
-    );
-  }
-
   void _showLogoutDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF06B6D4))),
+            child: Text('Cancel',
+                style: TextStyle(color: Theme.of(context).primaryColor)),
           ),
           TextButton(
             onPressed: () {
@@ -234,25 +242,30 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = Theme.of(context).primaryColor;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF334155)),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : Colors.grey[300]!,
+          ),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF06B6D4).withOpacity(0.2),
+                color: accentColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: const Color(0xFF06B6D4), size: 20),
+              child: Icon(icon, color: accentColor, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(

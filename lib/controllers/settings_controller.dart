@@ -51,7 +51,12 @@ class SettingsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadSettings();
+    // Don't load here, will be loaded in main
+  }
+
+  // Load initial settings - called from main before app starts
+  Future<void> loadInitialSettings() async {
+    await _loadSettings();
   }
 
   Future<void> _loadSettings() async {

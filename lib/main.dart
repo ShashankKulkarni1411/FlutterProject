@@ -10,9 +10,23 @@ import 'screens/analytics_screen.dart';
 import 'screens/wallet_screen.dart';
 import 'screens/profile_screen.dart';
 import 'controllers/navigation_controller.dart';
+import 'controllers/theme_controller.dart';
+import 'controllers/settings_controller.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize controllers before app starts
+  final themeController = Get.put(ThemeController());
+  final settingsController = Get.put(SettingsController());
   Get.put(NavigationController());
+
+  // Wait for settings to load
+  await Future.wait([
+    themeController.loadInitialSettings(),
+    settingsController.loadInitialSettings(),
+  ]);
+
   runApp(const MyApp());
 }
 
@@ -21,17 +35,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Finance App',
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
-        primaryColor: const Color(0xFF06B6D4),
-      ),
-      home: const MainPage(),
-    );
+    final themeController = Get.find<ThemeController>();
+
+    return Obx(() => GetMaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Finance App',
+          theme: themeController.getLightTheme(),
+          darkTheme: themeController.getDarkTheme(),
+          themeMode: themeController.themeMode,
+          home: const MainPage(),
+        ));
   }
 }
 
@@ -51,8 +64,10 @@ class MainPage extends StatelessWidget {
                 print('Bottom nav tapped: $index');
                 controller.changePage(index);
               },
-              backgroundColor: const Color(0xFF1E293B),
-              selectedItemColor: const Color(0xFF06B6D4),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E293B)
+                  : Colors.white,
+              selectedItemColor: Theme.of(context).primaryColor,
               unselectedItemColor: Colors.grey,
               type: BottomNavigationBarType.fixed,
               items: const [

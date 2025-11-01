@@ -15,7 +15,12 @@ class ThemeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadThemeFromPrefs();
+    // Don't load here, will be loaded in main
+  }
+
+  // Load initial settings - called from main before app starts
+  Future<void> loadInitialSettings() async {
+    await _loadThemeFromPrefs();
   }
 
   // Load saved theme preferences
@@ -32,9 +37,7 @@ class ThemeController extends GetxController {
   Future<void> _saveThemeToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-      'themeMode',
-      _getStringFromThemeMode(_themeMode.value),
-    );
+        'themeMode', _getStringFromThemeMode(_themeMode.value));
     await prefs.setInt('accentColor', _accentColor.value.value);
   }
 
@@ -94,15 +97,47 @@ class ThemeController extends GetxController {
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: accentColor,
-      scaffoldBackgroundColor: Colors.grey[50],
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       colorScheme: ColorScheme.light(
         primary: accentColor,
         secondary: accentColor,
+        surface: Colors.white,
+        background: const Color(0xFFF8FAFC),
+      ),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey[300]!),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accentColor),
+        ),
+      ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: Colors.black87),
+        bodyMedium: TextStyle(color: Colors.black87),
+        bodySmall: TextStyle(color: Colors.black54),
       ),
     );
   }
@@ -113,15 +148,46 @@ class ThemeController extends GetxController {
       brightness: Brightness.dark,
       primaryColor: accentColor,
       scaffoldBackgroundColor: const Color(0xFF0F172A),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF0F172A),
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       colorScheme: ColorScheme.dark(
         primary: accentColor,
         secondary: accentColor,
         surface: const Color(0xFF1E293B),
+        background: const Color(0xFF0F172A),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1E293B),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF334155)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1E293B),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF334155)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF334155)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accentColor),
+        ),
+      ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: Colors.white),
+        bodyMedium: TextStyle(color: Colors.white),
+        bodySmall: TextStyle(color: Colors.white70),
       ),
     );
   }
