@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'firebase_options.dart';
+import 'splash_screen.dart';
+
+// Screens
 import 'screens/dashboard_screen.dart';
 import 'screens/scanner_screen.dart';
 import 'screens/add_expense_screen.dart';
@@ -9,6 +15,8 @@ import 'screens/investment_hub_screen.dart';
 import 'screens/analytics_screen.dart';
 import 'screens/wallet_screen.dart';
 import 'screens/profile_screen.dart';
+
+// Controllers
 import 'controllers/navigation_controller.dart';
 import 'controllers/theme_controller.dart';
 import 'controllers/settings_controller.dart';
@@ -16,12 +24,17 @@ import 'controllers/settings_controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize controllers before app starts
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Initialize GetX controllers
   final themeController = Get.put(ThemeController());
   final settingsController = Get.put(SettingsController());
   Get.put(NavigationController());
 
-  // Wait for settings to load
+  // Load settings before running the app
   await Future.wait([
     themeController.loadInitialSettings(),
     settingsController.loadInitialSettings(),
@@ -31,7 +44,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -43,13 +56,13 @@ class MyApp extends StatelessWidget {
           theme: themeController.getLightTheme(),
           darkTheme: themeController.getDarkTheme(),
           themeMode: themeController.themeMode,
-          home: const MainPage(),
+          home: const SplashScreen(),
         ));
   }
 }
 
 class MainPage extends StatelessWidget {
-  const MainPage({Key? key}) : super(key: key);
+  const MainPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +74,6 @@ class MainPage extends StatelessWidget {
             () => BottomNavigationBar(
               currentIndex: controller.currentIndex.value,
               onTap: (index) {
-                print('Bottom nav tapped: $index');
                 controller.changePage(index);
               },
               backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -96,7 +108,6 @@ class MainPage extends StatelessWidget {
   }
 
   Widget _buildScreen(String page) {
-    print('Building screen: $page');
     switch (page) {
       case 'dashboard':
         return const DashboardScreen();
