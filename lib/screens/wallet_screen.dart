@@ -461,6 +461,7 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../firebase_service.dart';
+import '../controllers/theme_controller.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({Key? key}) : super(key: key);
@@ -515,7 +516,7 @@ class _WalletScreenState extends State<WalletScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: Theme.of(context).colorScheme.background,
         title: StreamBuilder<DocumentSnapshot>(
           stream: _firebaseService.getUserProfileStream(),
           builder: (context, snapshot) {
@@ -557,143 +558,195 @@ class _WalletScreenState extends State<WalletScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Tab Selector
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF334155)),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: ['Overview', 'Insights', 'Goals'].map((tab) {
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => selectedTab = tab),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: selectedTab == tab
-                                  ? const Color(0xFF06B6D4).withOpacity(0.2)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: selectedTab == tab
-                                  ? Border.all(color: const Color(0xFF06B6D4))
-                                  : null,
-                            ),
-                            child: Text(
-                              tab,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: selectedTab == tab
-                                    ? const Color(0xFF06B6D4)
-                                    : Colors.grey,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
+                Builder(
+                  builder: (context) {
+                    final colorScheme = Theme.of(context).colorScheme;
+                    final themeController = Get.find<ThemeController>();
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colorScheme.surfaceVariant),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: ['Overview', 'Insights', 'Goals'].map((tab) {
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => selectedTab = tab),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedTab == tab
+                                      ? themeController.accentColor.withOpacity(0.2)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: selectedTab == tab
+                                      ? Border.all(color: themeController.accentColor)
+                                      : null,
+                                ),
+                                child: Text(
+                                  tab,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: selectedTab == tab
+                                        ? themeController.accentColor
+                                        : colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
 
                 if (selectedTab == 'Overview') ...[
                   // Total Balance Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF334155)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  Builder(
+                    builder: (context) {
+                      final colorScheme = Theme.of(context).colorScheme;
+                      return Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colorScheme.surfaceVariant),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total Balance',
-                                style: TextStyle(color: Colors.grey, fontSize: 12)),
-                            const SizedBox(height: 8),
-                            Text('₹${totalBalance.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                    fontSize: 28, fontWeight: FontWeight.bold)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Balance',
+                                  style: TextStyle(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '₹${totalBalance.toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                '+18%',
+                                style: TextStyle(
+                                    color: Color(0xFF10B981),
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text('+18%',
-                              style: TextStyle(
-                                  color: Color(0xFF10B981),
-                                  fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
 
                   // Income and Expenses
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF334155)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Income',
-                                  style: TextStyle(color: Colors.grey, fontSize: 11)),
-                              const SizedBox(height: 8),
-                              Text('₹${totalIncome.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                      fontSize: 18, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF334155)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Expenses',
-                                  style: TextStyle(color: Colors.grey, fontSize: 11)),
-                              const SizedBox(height: 8),
-                              Text('₹${totalExpenses.toStringAsFixed(0)}',
-                                  style: const TextStyle(
+                  Builder(
+                    builder: (context) {
+                      final colorScheme = Theme.of(context).colorScheme;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: colorScheme.surfaceVariant),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Income',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '₹${totalIncome.toStringAsFixed(0)}',
+                                    style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFFEA580C))),
-                            ],
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: colorScheme.surfaceVariant),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Expenses',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '₹${totalExpenses.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFEA580C),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
                   // Smart Wallet Overview
-                  const Text('Smart Wallet Overview',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Smart Wallet Overview',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
+                  ),
                   const SizedBox(height: 12),
 
                   if (_loadingAnalytics)
@@ -748,75 +801,122 @@ class _WalletScreenState extends State<WalletScreen> {
                   const SizedBox(height: 24),
 
                   // Money Health Score
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF334155)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                                color: const Color(0xFF8B5CF6), width: 3),
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('${_analyticsData?['healthScore'] ?? 78}',
-                                    style: const TextStyle(
-                                        fontSize: 24, fontWeight: FontWeight.bold)),
-                                const Text('/100',
-                                    style: TextStyle(
-                                        fontSize: 10, color: Colors.grey)),
-                              ],
+                  Builder(
+                    builder: (context) {
+                      final colorScheme = Theme.of(context).colorScheme;
+                      final themeController = Get.find<ThemeController>();
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: colorScheme.surfaceVariant),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF8B5CF6),
+                                  width: 3,
+                                ),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '${_analyticsData?['healthScore'] ?? 78}',
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    Text(
+                                      '/100',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Money Health Score',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Your financial health is good, but\nthere\'s room for improvement.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '💡 Reduce dining expenses to\nimprove',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: themeController.accentColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text('Money Health Score',
-                                  style: TextStyle(
-                                      fontSize: 14, fontWeight: FontWeight.bold)),
-                              SizedBox(height: 8),
-                              Text(
-                                  'Your financial health is good, but\nthere\'s room for improvement.',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey)),
-                              SizedBox(height: 8),
-                              Text('💡 Reduce dining expenses to\nimprove',
-                                  style: TextStyle(
-                                      fontSize: 11, color: Color(0xFF06B6D4))),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
                   // Recent Transactions
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Recent Transactions',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      GestureDetector(
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('View all transactions')),
-                        ),
-                        child: const Text('View All',
-                            style: TextStyle(color: Color(0xFF06B6D4), fontSize: 12)),
-                      ),
-                    ],
+                  Builder(
+                    builder: (context) {
+                      final colorScheme = Theme.of(context).colorScheme;
+                      final themeController = Get.find<ThemeController>();
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Recent Transactions',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onBackground,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('View all transactions')),
+                            ),
+                            child: Text(
+                              'View All',
+                              style: TextStyle(
+                                color: themeController.accentColor,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
 
@@ -833,17 +933,20 @@ class _WalletScreenState extends State<WalletScreen> {
                       }
 
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        final colorScheme = Theme.of(context).colorScheme;
                         return Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF334155)),
+                            border: Border.all(color: colorScheme.surfaceVariant),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
                               'No transactions yet',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                         );
@@ -867,8 +970,14 @@ class _WalletScreenState extends State<WalletScreen> {
                     },
                   ),
                 ] else if (selectedTab == 'Insights') ...[
-                  const Text('Insights & Analytics',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Insights & Analytics',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Center(
                     child: Padding(
@@ -885,8 +994,14 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                   ),
                 ] else ...[
-                  const Text('Savings Goals',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Savings Goals',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Center(
                     child: Padding(
@@ -927,29 +1042,46 @@ class _WalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF334155)),
+          border: Border.all(color: colorScheme.surfaceVariant),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title,
-                style: const TextStyle(color: Colors.grey, fontSize: 11)),
+            Text(
+              title,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 11,
+              ),
+            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(amount,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
-                Text(subtitle,
-                    style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                Text(
+                  amount,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ],
@@ -974,6 +1106,8 @@ class _TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: () => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$name transaction details')),
@@ -982,9 +1116,9 @@ class _TransactionTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF334155)),
+          border: Border.all(color: colorScheme.surfaceVariant),
         ),
         child: Row(
           children: [
@@ -994,21 +1128,34 @@ class _TransactionTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600)),
-                  Text(time,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    time,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             ),
-            Text(amount,
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: amount.contains('+')
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEA580C))),
+            Text(
+              amount,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: amount.contains('+')
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFEA580C),
+              ),
+            ),
           ],
         ),
       ),

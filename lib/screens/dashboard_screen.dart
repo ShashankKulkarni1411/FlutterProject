@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/navigation_controller.dart';
+import '../controllers/theme_controller.dart';
 import '../models/transaction_model.dart';
 import '../screens/scanner_screen.dart';
 import '../screens/add_expense_screen.dart';
@@ -84,7 +85,9 @@ class DashboardScreen extends StatelessWidget {
                             Text(
                               'Good Morning,',
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey
+                                    : Colors.grey[600],
                                 fontSize:
                                     MediaQuery.of(context).size.width * 0.035,
                               ),
@@ -95,19 +98,24 @@ class DashboardScreen extends StatelessWidget {
                                 fontSize:
                                     MediaQuery.of(context).size.width * 0.06,
                                 fontWeight: FontWeight.bold,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black87,
                               ),
                             ),
                           ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFF06B6D4)),
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: const Icon(
-                            Icons.notifications_none,
-                            color: Color(0xFF06B6D4),
+                        GetBuilder<ThemeController>(
+                          builder: (themeController) => Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: themeController.accentColor),
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: Icon(
+                              Icons.notifications_none,
+                              color: themeController.accentColor,
+                            ),
                           ),
                         ),
                       ],
@@ -118,23 +126,35 @@ class DashboardScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF334155)),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF334155)
+                              : Colors.grey[300]!,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Total Balance',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                            style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey
+                                  : Colors.grey[600],
+                              fontSize: 12,
+                            ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             '₹25,000',
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -143,16 +163,18 @@ class DashboardScreen extends StatelessWidget {
                             children: [
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
                                   Text(
                                     'Spent this month',
                                     style: TextStyle(
-                                      color: Colors.grey,
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey
+                                          : Colors.grey[600],
                                       fontSize: 11,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
-                                  Text(
+                                  const SizedBox(height: 4),
+                                  const Text(
                                     '₹12,500',
                                     style: TextStyle(
                                       color: Color(0xFFEA580C),
@@ -164,16 +186,18 @@ class DashboardScreen extends StatelessWidget {
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
                                   Text(
                                     'Remaining',
                                     style: TextStyle(
-                                      color: Colors.grey,
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey
+                                          : Colors.grey[600],
                                       fontSize: 11,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
-                                  Text(
+                                  const SizedBox(height: 4),
+                                  const Text(
                                     '₹12,500',
                                     style: TextStyle(
                                       color: Color(0xFF10B981),
@@ -191,11 +215,14 @@ class DashboardScreen extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     // Quick Actions
-                    const Text(
+                    Text(
                       'Quick Actions',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -259,20 +286,25 @@ class DashboardScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Recent Transactions',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black87,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => Get.to(() => const AnalyticsScreen()),
-                          child: const Text(
-                            'View All',
-                            style: TextStyle(
-                              color: Color(0xFF06B6D4),
-                              fontSize: 12,
+                        GetBuilder<ThemeController>(
+                          builder: (themeController) => GestureDetector(
+                            onTap: () => Get.to(() => const AnalyticsScreen()),
+                            child: Text(
+                              'View All',
+                              style: TextStyle(
+                                color: themeController.accentColor,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
@@ -311,6 +343,7 @@ class _QuickActionButton extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = (screenWidth * 0.08).clamp(24.0, 32.0);
     final fontSize = (screenWidth * 0.03).clamp(11.0, 14.0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: onTap,
@@ -319,7 +352,7 @@ class _QuickActionButton extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 100),
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor.withOpacity(0.5), width: 1.5),
         ),
@@ -336,6 +369,7 @@ class _QuickActionButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: fontSize,
                   fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white : Colors.black87,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -355,13 +389,19 @@ class _TransactionItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF334155)
+              : Colors.grey[300]!,
+        ),
       ),
       child: Row(
         children: [
@@ -373,14 +413,18 @@ class _TransactionItem extends StatelessWidget {
               children: [
                 Text(
                   transaction.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 Text(
                   '${transaction.time} • ${transaction.category}',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.grey : Colors.grey[600],
+                  ),
                 ),
               ],
             ),
@@ -407,13 +451,15 @@ class _BottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Obx(
       () => Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
+          color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -497,53 +543,63 @@ class _NavItem extends StatelessWidget {
       final centerSize = (screenWidth * 0.14).clamp(48.0, 60.0);
       final iconSize = (screenWidth * 0.07).clamp(24.0, 32.0);
 
-      return GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: centerSize,
-          height: centerSize,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF06B6D4), width: 2),
-          ),
-          child: Icon(icon, color: const Color(0xFF06B6D4), size: iconSize),
-        ),
+      return GetBuilder<ThemeController>(
+        builder: (themeController) {
+          final accentColor = themeController.accentColor;
+          return GestureDetector(
+            onTap: onTap,
+            child: Container(
+              width: centerSize,
+              height: centerSize,
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: accentColor, width: 2),
+              ),
+              child: Icon(icon, color: accentColor, size: iconSize),
+            ),
+          );
+        },
       );
     }
 
     final iconSize = (screenWidth * 0.06).clamp(20.0, 28.0);
     final fontSize = (screenWidth * 0.027).clamp(10.0, 12.0);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.03,
-          vertical: 8,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isActive ? const Color(0xFF06B6D4) : Colors.grey,
-              size: iconSize,
+    return GetBuilder<ThemeController>(
+      builder: (themeController) {
+        final accentColor = themeController.accentColor;
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.03,
+              vertical: 8,
             ),
-            if (label.isNotEmpty) ...[
-              SizedBox(height: screenWidth * 0.01),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isActive ? const Color(0xFF06B6D4) : Colors.grey,
-                  fontSize: fontSize,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: isActive ? accentColor : Colors.grey,
+                  size: iconSize,
                 ),
-              ),
-            ],
-          ],
-        ),
-      ),
+                if (label.isNotEmpty) ...[
+                  SizedBox(height: screenWidth * 0.01),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isActive ? accentColor : Colors.grey,
+                      fontSize: fontSize,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

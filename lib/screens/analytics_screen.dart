@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/navigation_controller.dart';
+import '../controllers/theme_controller.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({Key? key}) : super(key: key);
@@ -18,7 +19,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: Theme.of(context).colorScheme.background,
         title: const Text('Spending Analysis'),
         centerTitle: false,
         actions: [
@@ -42,266 +43,356 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // View Selector
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF334155)),
-              ),
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: ['Weekly', 'Monthly', 'Yearly'].map((view) {
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => selectedView = view),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: selectedView == view
-                              ? const Color(0xFF06B6D4).withOpacity(0.2)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          border: selectedView == view
-                              ? Border.all(color: const Color(0xFF06B6D4))
-                              : null,
-                        ),
-                        child: Text(
-                          view,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: selectedView == view
-                                ? const Color(0xFF06B6D4)
-                                : Colors.grey,
-                            fontWeight: FontWeight.w600,
+            Builder(
+              builder: (context) {
+                final colorScheme = Theme.of(context).colorScheme;
+                final themeController = Get.find<ThemeController>();
+                return Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: colorScheme.surfaceVariant),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: ['Weekly', 'Monthly', 'Yearly'].map((view) {
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => selectedView = view),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: selectedView == view
+                                  ? themeController.accentColor.withOpacity(0.2)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: selectedView == view
+                                  ? Border.all(color: themeController.accentColor)
+                                  : null,
+                            ),
+                            child: Text(
+                              view,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: selectedView == view
+                                    ? themeController.accentColor
+                                    : colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
 
             // Chart Type Toggle
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () => setState(() => showBarChart = true),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: showBarChart
-                          ? const Color(0xFF06B6D4)
-                          : const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: showBarChart
-                            ? const Color(0xFF06B6D4)
-                            : const Color(0xFF334155),
+            Builder(
+              builder: (context) {
+                final colorScheme = Theme.of(context).colorScheme;
+                final themeController = Get.find<ThemeController>();
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => showBarChart = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: showBarChart
+                              ? themeController.accentColor
+                              : colorScheme.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: showBarChart
+                                ? themeController.accentColor
+                                : colorScheme.surfaceVariant,
+                          ),
+                        ),
+                        child: Text(
+                          'Bar Chart',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: showBarChart
+                                ? Colors.white
+                                : colorScheme.onSurface,
+                          ),
+                        ),
                       ),
                     ),
-                    child: const Text('Bar Chart',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => setState(() => showBarChart = false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: !showBarChart
-                          ? const Color(0xFF06B6D4)
-                          : const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: !showBarChart
-                            ? const Color(0xFF06B6D4)
-                            : const Color(0xFF334155),
+                    GestureDetector(
+                      onTap: () => setState(() => showBarChart = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: !showBarChart
+                              ? themeController.accentColor
+                              : colorScheme.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: !showBarChart
+                                ? themeController.accentColor
+                                : colorScheme.surfaceVariant,
+                          ),
+                        ),
+                        child: Text(
+                          'Donut Chart',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: !showBarChart
+                                ? Colors.white
+                                : colorScheme.onSurface,
+                          ),
+                        ),
                       ),
                     ),
-                    child: const Text('Donut Chart',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
 
             // Chart Container
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF334155)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (showBarChart) ...[
-                    const SizedBox(height: 20),
-                    _buildBarChart(),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('October 2023',
-                            style: TextStyle(color: Colors.grey, fontSize: 12)),
-                        GestureDetector(
-                          onTap: () {},
-                          child: const Text('Details >',
+            Builder(
+              builder: (context) {
+                final colorScheme = Theme.of(context).colorScheme;
+                final themeController = Get.find<ThemeController>();
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colorScheme.surfaceVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (showBarChart) ...[
+                        const SizedBox(height: 20),
+                        _buildBarChart(),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'October 2023',
                               style: TextStyle(
-                                  color: Color(0xFF06B6D4), fontSize: 12)),
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 12,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {},
+                              child: Text(
+                                'Details >',
+                                style: TextStyle(
+                                  color: themeController.accentColor,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                      ] else ...[
+                        Center(
+                          child: _buildDonutChart(),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildCategoryLegend(),
                       ],
-                    ),
-                  ] else ...[
-                    Center(
-                      child: _buildDonutChart(),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildCategoryLegend(),
-                  ],
-                ],
-              ),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
 
             // Smart Insights
-            const Text('Smart Insights',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'Smart Insights',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onBackground,
+              ),
+            ),
             const SizedBox(height: 12),
 
             // Spending Alert
-            GestureDetector(
-              onTap: () => _showSpendingAlert(context),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF334155)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEA580C).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.trending_up,
-                          color: Color(0xFFEA580C), size: 20),
+            Builder(
+              builder: (context) {
+                final colorScheme = Theme.of(context).colorScheme;
+                return GestureDetector(
+                  onTap: () => _showSpendingAlert(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colorScheme.surfaceVariant),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Spending Alert',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold)),
-                          SizedBox(height: 4),
-                          Text(
-                              'You spent 20% more on dining this month\ncompared to your average.',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
-                      ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEA580C).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.trending_up,
+                              color: Color(0xFFEA580C), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Spending Alert',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'You spent 20% more on dining this month\ncompared to your average.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 12),
 
             // Savings Opportunity
-            GestureDetector(
-              onTap: () => _showSavingsOpportunity(context),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF334155)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF06B6D4).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.trending_down,
-                          color: Color(0xFF06B6D4), size: 20),
+            Builder(
+              builder: (context) {
+                final colorScheme = Theme.of(context).colorScheme;
+                final themeController = Get.find<ThemeController>();
+                return GestureDetector(
+                  onTap: () => _showSavingsOpportunity(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colorScheme.surfaceVariant),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Savings Opportunity',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold)),
-                          SizedBox(height: 4),
-                          Text(
-                              'Your transport spending decreased by 15%\ncompared to last month.',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
-                      ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: themeController.accentColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.trending_down,
+                            color: themeController.accentColor,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Savings Opportunity',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Your transport spending decreased by 15%\ncompared to last month.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 12),
 
             // Smart Tip
-            GestureDetector(
-              onTap: () => _showSmartTip(context),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF334155)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8B5CF6).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.lightbulb_outline,
-                          color: Color(0xFF8B5CF6), size: 20),
+            Builder(
+              builder: (context) {
+                final colorScheme = Theme.of(context).colorScheme;
+                return GestureDetector(
+                  onTap: () => _showSmartTip(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: colorScheme.surfaceVariant),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Smart Tip',
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold)),
-                          SizedBox(height: 4),
-                          Text(
-                              'Setting a budget for shopping could help\nyou save ₹1,000 monthly.',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey)),
-                        ],
-                      ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.lightbulb_outline,
+                              color: Color(0xFF8B5CF6), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Smart Tip',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Setting a budget for shopping could help\nyou save ₹1,000 monthly.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
           ],
         ),

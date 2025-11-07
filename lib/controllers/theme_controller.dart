@@ -62,8 +62,7 @@ class ThemeController extends GetxController {
   void setAccentColor(Color color) {
     _accentColor.value = color;
     _saveThemeToPrefs();
-    // Force rebuild of app
-    Get.forceAppUpdate();
+    // Obx in main.dart will automatically rebuild when accentColor changes
   }
 
   // Helper methods
@@ -108,10 +107,14 @@ class ThemeController extends GetxController {
         primary: accentColor,
         secondary: accentColor,
         surface: Colors.white,
+        onSurface: Colors.black87,
+        surfaceVariant: Colors.grey[100]!,
+        onSurfaceVariant: Colors.grey[700]!,
         background: const Color(0xFFF8FAFC),
+        onBackground: Colors.black87,
       ),
       cardTheme: CardThemeData(
-        color: Colors.white,
+        color: Colors.white, // Will be overridden by colorScheme.surface in widgets
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -158,10 +161,14 @@ class ThemeController extends GetxController {
         primary: accentColor,
         secondary: accentColor,
         surface: const Color(0xFF1E293B),
+        onSurface: Colors.white,
+        surfaceVariant: const Color(0xFF334155),
+        onSurfaceVariant: Colors.grey[400]!,
         background: const Color(0xFF0F172A),
+        onBackground: Colors.white,
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF1E293B),
+        color: const Color(0xFF1E293B), // Will be overridden by colorScheme.surface in widgets
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

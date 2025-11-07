@@ -50,14 +50,20 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
 
-    return Obx(() => GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Finance App',
-          theme: themeController.getLightTheme(),
-          darkTheme: themeController.getDarkTheme(),
-          themeMode: themeController.themeMode,
-          home: const SplashScreen(),
-        ));
+    return Obx(() {
+      // Access both observables to ensure Obx rebuilds when either changes
+      final themeMode = themeController.themeMode;
+      final accentColor = themeController.accentColor;
+      
+      return GetMaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Finance App',
+        theme: themeController.getLightTheme(),
+        darkTheme: themeController.getDarkTheme(),
+        themeMode: themeMode,
+        home: const SplashScreen(),
+      );
+    });
   }
 }
 
