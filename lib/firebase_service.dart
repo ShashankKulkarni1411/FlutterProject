@@ -281,4 +281,587 @@ class FirebaseService {
         .where('isPaid', isEqualTo: false)
         .snapshots();
   }
+
+  // Goals Operations
+  Future<void> addGoal(Map<String, dynamic> goalData) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('goals')
+        .add({
+      ...goalData,
+      'createdAt': FieldValue.serverTimestamp(),
+      'userId': currentUserId,
+    });
+  }
+
+  Future<void> updateGoal(String goalId, Map<String, dynamic> updates) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('goals')
+        .doc(goalId)
+        .update(updates);
+  }
+
+  Future<void> deleteGoal(String goalId) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('goals')
+        .doc(goalId)
+        .delete();
+  }
+
+  Stream<QuerySnapshot> getGoalsStream() {
+    if (currentUserId == null) throw Exception('No user logged in');
+    return _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('goals')
+        .orderBy('createdAt', descending: false)
+        .snapshots();
+  }
+
+  Future<void> updateGoalProgress(String goalId, double amount) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final goalDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('goals')
+        .doc(goalId)
+        .get();
+    
+    if (goalDoc.exists) {
+      final currentAmount = (goalDoc.data()?['currentAmount'] ?? 0).toDouble();
+      final newAmount = currentAmount + amount;
+      
+      await _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .collection('goals')
+          .doc(goalId)
+          .update({'currentAmount': newAmount});
+    }
+  }
+
+  Future<double> getGoalProgress(String goalId) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final goalDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('goals')
+        .doc(goalId)
+        .get();
+    
+    if (goalDoc.exists) {
+      final data = goalDoc.data()!;
+      final currentAmount = (data['currentAmount'] ?? 0).toDouble();
+      final targetAmount = (data['targetAmount'] ?? 1).toDouble();
+      return (currentAmount / targetAmount) * 100;
+    }
+    return 0.0;
+  }
+
+  // Insights Operations
+  Future<List<Map<String, dynamic>>> getSpendingTrends({required String period}) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final DateTime now = DateTime.now();
+    DateTime startDate;
+    
+    switch (period) {
+      case 'Daily':
+        startDate = DateTime(now.year, now.month, now.day - 6); // Last 7 days
+        break;
+      case 'Weekly':
+        startDate = DateTime(now.year, now.month, now.day - 27); // Last 4 weeks
+        break;
+      case 'Monthly':
+        startDate = DateTime(now.year, now.month - 5, 1); // Last 6 months
+        break;
+      default:
+        startDate = DateTime(now.year, now.month, now.day - 27);
+    }
+    
+    final transactions = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('transactions')
+        .where('timestamp', isGreaterThan: Timestamp.fromDate(startDate))
+        .where('type', isEqualTo: 'expense')
+        .orderBy('timestamp', descending: false)
+        .get();
+    
+    // Group by date
+    Map<String, double> dateAmounts = {};
+    
+    for (var doc in transactions.docs) {
+      final data = doc.data();
+      final timestamp = data['timestamp'] as Timestamp?;
+      if (timestamp != null) {
+        final date = timestamp.toDate();
+        String dateKey;
+        
+        if (period == 'Daily') {
+          dateKey = '${date.month}/${date.day}';
+        } else if (period == 'Weekly') {
+          // Group by week
+          final weekStart = date.subtract(Duration(days: date.weekday - 1));
+          dateKey = '${weekStart.month}/${weekStart.day}';
+        } else {
+          dateKey = '${date.month}/${date.year}';
+        }
+        
+        final amount = (data['amount'] ?? 0).toDouble();
+        dateAmounts[dateKey] = (dateAmounts[dateKey] ?? 0) + amount;
+      }
+    }
+    
+    return dateAmounts.entries
+        .map((e) => {'date': e.key, 'amount': e.value})
+        .toList();
+  }
+
+  Future<Map<String, double>> getCategoryBreakdown({String? period}) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    Query query = _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('transactions')
+        .where('type', isEqualTo: 'expense');
+    
+    if (period != null) {
+      final DateTime now = DateTime.now();
+      DateTime startDate;
+      
+      switch (period) {
+        case 'Monthly':
+          startDate = DateTime(now.year, now.month, 1);
+          break;
+        case 'Weekly':
+          startDate = now.subtract(const Duration(days: 7));
+          break;
+        default:
+          startDate = DateTime(now.year, now.month, 1);
+      }
+      
+      query = query.where('timestamp', isGreaterThan: Timestamp.fromDate(startDate));
+    }
+    
+    final transactions = await query.get();
+    
+    Map<String, double> categorySpending = {};
+    for (var doc in transactions.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final category = data['category'] ?? 'Other';
+      final amount = (data['amount'] ?? 0).toDouble();
+      categorySpending[category] = (categorySpending[category] ?? 0) + amount;
+    }
+    
+    return categorySpending;
+  }
+
+  Future<List<Map<String, dynamic>>> getTopMerchants({int limit = 5}) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final transactions = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('transactions')
+        .where('type', isEqualTo: 'expense')
+        .get();
+    
+    Map<String, Map<String, dynamic>> merchantData = {};
+    
+    for (var doc in transactions.docs) {
+      final data = doc.data();
+      final name = data['name'] ?? 'Unknown';
+      final amount = (data['amount'] ?? 0).toDouble();
+      
+      if (merchantData.containsKey(name)) {
+        merchantData[name]!['count'] = (merchantData[name]!['count'] as int) + 1;
+        merchantData[name]!['totalAmount'] = (merchantData[name]!['totalAmount'] as double) + amount;
+      } else {
+        merchantData[name] = {
+          'name': name,
+          'count': 1,
+          'totalAmount': amount,
+        };
+      }
+    }
+    
+    final sortedMerchants = merchantData.values.toList()
+      ..sort((a, b) => (b['totalAmount'] as double).compareTo(a['totalAmount'] as double));
+    
+    return sortedMerchants.take(limit).toList();
+  }
+
+  Future<Map<String, dynamic>> getBudgetComparison() async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final userDoc = await _firestore.collection('users').doc(currentUserId).get();
+    final userData = userDoc.data() ?? {};
+    
+    // Get monthly budget if set, otherwise use income as budget
+    final budget = (userData['monthlyBudget'] ?? userData['totalIncome'] ?? 45000.0).toDouble();
+    final spent = (userData['spentThisMonth'] ?? 0).toDouble();
+    final remaining = budget - spent;
+    final percentage = (spent / budget) * 100;
+    
+    return {
+      'budget': budget,
+      'spent': spent,
+      'remaining': remaining,
+      'percentage': percentage,
+      'hasAlert': percentage >= 90,
+      'isOverBudget': spent > budget,
+    };
+  }
+
+  // Payment Methods Operations
+  Future<void> addPaymentMethod(Map<String, dynamic> paymentMethodData) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('paymentMethods')
+        .add({
+      ...paymentMethodData,
+      'addedAt': FieldValue.serverTimestamp(),
+      'userId': currentUserId,
+    });
+  }
+
+  Future<void> updatePaymentMethod(String paymentMethodId, Map<String, dynamic> updates) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('paymentMethods')
+        .doc(paymentMethodId)
+        .update(updates);
+  }
+
+  Future<void> deletePaymentMethod(String paymentMethodId) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('paymentMethods')
+        .doc(paymentMethodId)
+        .delete();
+  }
+
+  Stream<QuerySnapshot> getPaymentMethodsStream() {
+    if (currentUserId == null) throw Exception('No user logged in');
+    return _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('paymentMethods')
+        .snapshots();
+  }
+
+  // Round Up Savings Operations
+  Future<void> addRoundUpSaving({
+    required String transactionId,
+    required double originalAmount,
+    required double roundedTo,
+    required double savedAmount,
+    String? investedIn,
+  }) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('roundUpSavings')
+        .add({
+      'transactionId': transactionId,
+      'originalAmount': originalAmount,
+      'roundedTo': roundedTo,
+      'savedAmount': savedAmount,
+      'investedIn': investedIn,
+      'timestamp': FieldValue.serverTimestamp(),
+      'userId': currentUserId,
+    });
+  }
+
+  Future<Map<String, dynamic>> getRoundUpSavingsStats() async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final DateTime now = DateTime.now();
+    final DateTime monthStart = DateTime(now.year, now.month, 1);
+    
+    final monthlyRoundUps = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('roundUpSavings')
+        .where('timestamp', isGreaterThan: Timestamp.fromDate(monthStart))
+        .get();
+    
+    double thisMonthSavings = 0;
+    for (var doc in monthlyRoundUps.docs) {
+      thisMonthSavings += (doc.data()['savedAmount'] ?? 0).toDouble();
+    }
+    
+    final allRoundUps = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('roundUpSavings')
+        .get();
+    
+    double totalSavings = 0;
+    for (var doc in allRoundUps.docs) {
+      totalSavings += (doc.data()['savedAmount'] ?? 0).toDouble();
+    }
+    
+    return {
+      'thisMonthSavings': thisMonthSavings,
+      'totalSavings': totalSavings,
+      'transactionCount': allRoundUps.docs.length,
+    };
+  }
+
+  Stream<QuerySnapshot> getRoundUpSavingsStream({int? limit}) {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    Query query = _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('roundUpSavings')
+        .orderBy('timestamp', descending: true);
+    
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+    
+    return query.snapshots();
+  }
+
+  // Budget Operations
+  Future<void> setBudget({
+    required String category,
+    required double monthlyLimit,
+    double alertThreshold = 80.0,
+  }) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final now = DateTime.now();
+    final monthKey = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('budgets')
+        .doc('$category-$monthKey')
+        .set({
+      'category': category,
+      'monthlyLimit': monthlyLimit,
+      'spentAmount': 0.0,
+      'alertThreshold': alertThreshold,
+      'month': monthKey,
+      'userId': currentUserId,
+    });
+  }
+
+  Future<void> updateBudgetSpending(String category, double amount) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final now = DateTime.now();
+    final monthKey = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    final budgetId = '$category-$monthKey';
+    
+    final budgetDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('budgets')
+        .doc(budgetId)
+        .get();
+    
+    if (budgetDoc.exists) {
+      final currentSpent = (budgetDoc.data()?['spentAmount'] ?? 0).toDouble();
+      await _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .collection('budgets')
+          .doc(budgetId)
+          .update({'spentAmount': currentSpent + amount});
+    }
+  }
+
+  Stream<QuerySnapshot> getBudgetsStream() {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final now = DateTime.now();
+    final monthKey = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    
+    return _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('budgets')
+        .where('month', isEqualTo: monthKey)
+        .snapshots();
+  }
+
+  // Recurring Expenses Operations
+  Future<void> addRecurringExpense(Map<String, dynamic> expenseData) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('recurringExpenses')
+        .add({
+      ...expenseData,
+      'isActive': true,
+      'createdAt': FieldValue.serverTimestamp(),
+      'userId': currentUserId,
+    });
+  }
+
+  Future<void> updateRecurringExpense(String expenseId, Map<String, dynamic> updates) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('recurringExpenses')
+        .doc(expenseId)
+        .update(updates);
+  }
+
+  Future<void> deleteRecurringExpense(String expenseId) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('recurringExpenses')
+        .doc(expenseId)
+        .delete();
+  }
+
+  Stream<QuerySnapshot> getRecurringExpensesStream() {
+    if (currentUserId == null) throw Exception('No user logged in');
+    return _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('recurringExpenses')
+        .where('isActive', isEqualTo: true)
+        .snapshots();
+  }
+
+  // Insights Operations
+  Future<void> saveInsight({
+    required String type,
+    required String category,
+    required String message,
+    double? amount,
+  }) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('insights')
+        .add({
+      'type': type,
+      'category': category,
+      'message': message,
+      'amount': amount,
+      'date': FieldValue.serverTimestamp(),
+      'isRead': false,
+      'userId': currentUserId,
+    });
+  }
+
+  Future<void> markInsightAsRead(String insightId) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('insights')
+        .doc(insightId)
+        .update({'isRead': true});
+  }
+
+  Stream<QuerySnapshot> getUnreadInsightsStream() {
+    if (currentUserId == null) throw Exception('No user logged in');
+    return _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('insights')
+        .where('isRead', isEqualTo: false)
+        .orderBy('date', descending: true)
+        .snapshots();
+  }
+
+  // Update split bill to handle contact syncing
+  Future<void> addSplitBill({
+    required String name,
+    required double totalAmount,
+    required String description,
+    required List<Map<String, dynamic>> splitWith,
+    required String category,
+    DateTime? dueDate,
+  }) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('bills')
+        .add({
+      'name': name,
+      'totalAmount': totalAmount,
+      'yourShare': totalAmount / (splitWith.length + 1),
+      'description': description,
+      'splitWith': splitWith,
+      'isPaid': false,
+      'dueDate': dueDate != null ? Timestamp.fromDate(dueDate) : null,
+      'category': category,
+      'createdAt': FieldValue.serverTimestamp(),
+      'userId': currentUserId,
+    });
+  }
+
+  Future<void> updateBillPaymentStatus(String billId, bool isPaid) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('bills')
+        .doc(billId)
+        .update({'isPaid': isPaid});
+  }
+
+  Future<void> updateParticipantPaymentStatus({
+    required String billId,
+    required int participantIndex,
+    required bool paid,
+  }) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    final billDoc = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('bills')
+        .doc(billId)
+        .get();
+    
+    if (billDoc.exists) {
+      final splitWith = List<Map<String, dynamic>>.from(billDoc.data()?['splitWith'] ?? []);
+      if (participantIndex < splitWith.length) {
+        splitWith[participantIndex]['paid'] = paid;
+        await _firestore
+            .collection('users')
+            .doc(currentUserId)
+            .collection('bills')
+            .doc(billId)
+            .update({'splitWith': splitWith});
+      }
+    }
+  }
 }
