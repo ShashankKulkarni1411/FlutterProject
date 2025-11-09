@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/navigation_controller.dart';
 import '../controllers/theme_controller.dart';
 
 class AnalyticsScreen extends StatefulWidget {
@@ -569,3 +568,4 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 }
+
