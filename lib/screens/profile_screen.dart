@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import '../controllers/navigation_controller.dart';
 import '../controllers/settings_controller.dart';
+import '../firebase_service.dart';
+import '../auth_main.dart';
 import 'settings/payment_methods_screen.dart';
 import 'settings/theme_settings_screen.dart';
 import 'settings/currency_settings_screen.dart';
@@ -18,6 +23,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final FirebaseService _firebaseService = FirebaseService();
+
   @override
   Widget build(BuildContext context) {
     final navController = Get.find<NavigationController>();
@@ -32,52 +39,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Edit Profile')),
+              const SnackBar(content: Text('Edit Profile feature coming soon!')),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF1E293B)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF334155)
-                      : Colors.grey[300]!,
-                ),
-              ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: _firebaseService.getUserProfileStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: const NetworkImage(
-                      'https://i.pravatar.cc/200?img=3',
-                    ),
-                    backgroundColor: Theme.of(context).primaryColor,
+                  Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text(
+                    'Error loading profile',
+                    style: TextStyle(color: Colors.grey),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Alex Johnson',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  const Text('alex.johnson@example.com',
-                      style: TextStyle(fontSize: 14, color: Colors.grey)),
-                  const SizedBox(height: 8),
-                  const Text('Member since October 2025',
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
-            ),
+            );
+          }
+
+          final userData = snapshot.data?.data() as Map<String, dynamic>?;
+          final userName = userData?['name'] ?? 'User';
+          final userEmail = userData?['email'] ?? FirebaseAuth.instance.currentUser?.email ?? 'user@example.com';
+          final avatarUrl = userData?['avatarUrl'];
+          final createdAt = userData?['createdAt'] as Timestamp?;
+          final memberSince = createdAt != null 
+              ? DateFormat('MMMM yyyy').format(createdAt.toDate())
+              : 'Recently';
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Card
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF1E293B)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF334155)
+                          : Colors.grey[300]!,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundImage: avatarUrl != null
+                            ? NetworkImage(avatarUrl)
+                            : null,
+                        backgroundColor: Theme.of(context).primaryColor,
+                        child: avatarUrl == null
+                            ? Text(
+                                userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                                style: const TextStyle(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        userName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        userEmail,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Member since $memberSince',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             const SizedBox(height: 24),
 
             // Account Settings
@@ -190,8 +253,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Text('Version 1.0.0',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             ),
-          ],
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -212,11 +277,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(color: Theme.of(context).primaryColor)),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Logged out successfully')),
-              );
+            onPressed: () async {
+              try {
+                // Logout from Firebase
+                await AuthService.logout();
+                Navigator.pop(context); // Close dialog
+                
+                // Navigate to auth screen
+                Get.offAll(() => const AuthScreen());
+                
+                Get.snackbar(
+                  'Success',
+                  'Logged out successfully',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
+                );
+              } catch (e) {
+                Navigator.pop(context);
+                Get.snackbar(
+                  'Error',
+                  'Failed to logout: $e',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+              }
             },
             child: const Text('Logout',
                 style: TextStyle(color: Color(0xFFDC2626))),

@@ -53,18 +53,28 @@ class AuthService {
   // Signup
   static Future<String> signup(String name, String email, String password) async {
     try {
+      // Create user in Firebase Auth
       UserCredential userCred = await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
 
+      // Create user document in Firestore
       await _db.collection('users').doc(userCred.user!.uid).set({
         'name': name,
         'email': email,
-        'createdAt': DateTime.now(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'walletBalance': 0.0,
+        'totalIncome': 0.0,
+        'totalExpenses': 0.0,
+        'spentThisMonth': 0.0,
+        'lastUpdated': FieldValue.serverTimestamp(),
       });
 
       return "Account created successfully!";
     } on FirebaseAuthException catch (e) {
-      return e.message ?? "Signup failed.";
+      return e.message ?? "Signup failed. Please check your email and password.";
+    } catch (e) {
+      // Catch Firestore and other errors
+      return "Error creating account: ${e.toString()}";
     }
   }
 

@@ -622,8 +622,10 @@ class FirebaseService {
     }
     
     return {
-      'thisMonthSavings': thisMonthSavings,
-      'totalSavings': totalSavings,
+      'thisMonth': thisMonthSavings,
+      'thisMonthSavings': thisMonthSavings, // Keep for backward compatibility
+      'totalSaved': totalSavings,
+      'totalSavings': totalSavings, // Keep for backward compatibility
       'transactionCount': allRoundUps.docs.length,
     };
   }
@@ -642,6 +644,62 @@ class FirebaseService {
     }
     
     return query.snapshots();
+  }
+
+  Future<List<Map<String, dynamic>>> getRoundUpSavingsLogs({int limit = 10}) async {
+    if (currentUserId == null) throw Exception('No user logged in');
+    
+    // Fetch round-up savings documents
+    final roundUpDocs = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('roundUpSavings')
+        .orderBy('timestamp', descending: true)
+        .limit(limit)
+        .get();
+    
+    List<Map<String, dynamic>> logs = [];
+    
+    for (var doc in roundUpDocs.docs) {
+      final data = doc.data();
+      final transactionId = data['transactionId'] as String?;
+      
+      // Default values
+      String transactionName = 'Transaction';
+      String category = 'Other';
+      
+      // Try to fetch transaction details if transactionId exists
+      if (transactionId != null) {
+        try {
+          final transactionDoc = await _firestore
+              .collection('users')
+              .doc(currentUserId)
+              .collection('transactions')
+              .doc(transactionId)
+              .get();
+          
+          if (transactionDoc.exists) {
+            final transactionData = transactionDoc.data();
+            transactionName = transactionData?['name'] ?? 'Transaction';
+            category = transactionData?['category'] ?? 'Other';
+          }
+        } catch (e) {
+          // If transaction doesn't exist, use defaults
+          print('Error fetching transaction $transactionId: $e');
+        }
+      }
+      
+      logs.add({
+        'transactionName': transactionName,
+        'category': category,
+        'savedAmount': data['savedAmount'] ?? 0.0,
+        'originalAmount': data['originalAmount'] ?? 0.0,
+        'roundedTo': data['roundedTo'] ?? 0.0,
+        'timestamp': data['timestamp'] as Timestamp?,
+      });
+    }
+    
+    return logs;
   }
 
   // Budget Operations

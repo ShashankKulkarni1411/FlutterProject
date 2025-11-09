@@ -1,9 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../controllers/navigation_controller.dart';
+import '../firebase_service.dart';
 
-class InvestmentHubScreen extends StatelessWidget {
+class InvestmentHubScreen extends StatefulWidget {
   const InvestmentHubScreen({Key? key}) : super(key: key);
+
+  @override
+  State<InvestmentHubScreen> createState() => _InvestmentHubScreenState();
+}
+
+class _InvestmentHubScreenState extends State<InvestmentHubScreen> {
+  final FirebaseService _firebaseService = FirebaseService();
+
+  String _formatTimestamp(Timestamp? timestamp) {
+    if (timestamp == null) return 'Unknown';
+    
+    final date = timestamp.toDate();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final transactionDate = DateTime(date.year, date.month, date.day);
+    
+    if (transactionDate == today) {
+      return 'Today, ${DateFormat('h:mm a').format(date)}';
+    } else if (transactionDate == yesterday) {
+      return 'Yesterday';
+    } else {
+      return DateFormat('MMM d, yyyy').format(date);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +54,42 @@ class InvestmentHubScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _firebaseService.getRoundUpSavingsStats(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text(
+                    'Error loading investment data',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '${snapshot.error}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final stats = snapshot.data ?? {};
+          final totalSaved = (stats['totalSaved'] ?? 0).toDouble();
+          final thisMonth = (stats['thisMonth'] ?? 0).toDouble();
+          final investmentThreshold = 100.0;
+          final progress = totalSaved / investmentThreshold;
+
+          return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,18 +128,18 @@ class InvestmentHubScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
+                            children: [
+                              const Text(
                                 'Round-Up Savings',
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: 12,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
-                                '₹178',
-                                style: TextStyle(
+                                '₹${totalSaved.toStringAsFixed(0)}',
+                                style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -86,15 +149,20 @@ class InvestmentHubScreen extends StatelessWidget {
                         ],
                       ),
                       ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Investment initiated!'),
-                            ),
-                          );
-                        },
+                        onPressed: totalSaved >= investmentThreshold
+                            ? () {
+                                Get.snackbar(
+                                  'Investment',
+                                  'Investment feature coming soon!',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: const Color(0xFF06B6D4),
+                                  colorText: Colors.white,
+                                );
+                              }
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF06B6D4),
+                          disabledBackgroundColor: Colors.grey.withOpacity(0.3),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
@@ -119,7 +187,7 @@ class InvestmentHubScreen extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
-                      value: 0.6,
+                      value: progress.clamp(0.0, 1.0),
                       minHeight: 8,
                       backgroundColor: const Color(0xFF334155),
                       valueColor: const AlwaysStoppedAnimation<Color>(
@@ -130,14 +198,14 @@ class InvestmentHubScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
+                    children: [
+                      const Text(
                         '₹0',
                         style: TextStyle(color: Colors.grey, fontSize: 11),
                       ),
                       Text(
-                        '₹100',
-                        style: TextStyle(color: Colors.grey, fontSize: 11),
+                        '₹${investmentThreshold.toStringAsFixed(0)}',
+                        style: const TextStyle(color: Colors.grey, fontSize: 11),
                       ),
                     ],
                   ),
@@ -164,14 +232,14 @@ class InvestmentHubScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
+                    children: [
+                      const Text(
                         'This Month',
                         style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       Text(
-                        '₹178',
-                        style: TextStyle(
+                        '₹${thisMonth.toStringAsFixed(0)}',
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF06B6D4),
@@ -190,14 +258,14 @@ class InvestmentHubScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
+                    children: [
+                      const Text(
                         'Total Saved',
                         style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       Text(
-                        '₹1,240',
-                        style: TextStyle(
+                        '₹${totalSaved.toStringAsFixed(0)}',
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF10B981),
@@ -317,26 +385,95 @@ class InvestmentHubScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            _RoundUpLog(
-              title: 'Grocery Store',
-              subtitle: 'Today, 2:30 PM • Food',
-              amount: '+₹2',
-              originalAmount: 'Spent ₹48 — Rounded to ₹50',
-            ),
-            _RoundUpLog(
-              title: 'Coffee Shop',
-              subtitle: 'Today, 11:15 AM • Dining',
-              amount: '+₹5',
-              originalAmount: 'Spent ₹125 — Rounded to ₹130',
-            ),
-            _RoundUpLog(
-              title: 'Pharmacy',
-              subtitle: 'Yesterday • Health',
-              amount: '+₹3',
-              originalAmount: 'Spent ₹273 — Rounded to ₹276',
+
+            // Dynamic Round-Up Logs from Firebase
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _firebaseService.getRoundUpSavingsLogs(limit: 10),
+              builder: (context, logsSnapshot) {
+                if (logsSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                if (logsSnapshot.hasError) {
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF334155)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Error loading logs: ${logsSnapshot.error}',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  );
+                }
+
+                final logs = logsSnapshot.data ?? [];
+                
+                if (logs.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF334155)),
+                    ),
+                    child: Center(
+                      child: Column(
+                        children: const [
+                          Icon(
+                            Icons.savings_outlined,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'No round-up logs yet',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Start adding expenses to accumulate savings!',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: logs.map((log) {
+                    final transactionName = log['transactionName'] ?? 'Transaction';
+                    final category = log['category'] ?? 'Other';
+                    final savedAmount = (log['savedAmount'] ?? 0).toDouble();
+                    final originalAmount = (log['originalAmount'] ?? 0).toDouble();
+                    final roundedTo = (log['roundedTo'] ?? 0).toDouble();
+                    final timestamp = log['timestamp'] as Timestamp?;
+
+                    return _RoundUpLog(
+                      title: transactionName,
+                      subtitle: '${_formatTimestamp(timestamp)} • $category',
+                      amount: '+₹${savedAmount.toStringAsFixed(0)}',
+                      originalAmount: 'Spent ₹${originalAmount.toStringAsFixed(0)} — Rounded to ₹${roundedTo.toStringAsFixed(0)}',
+                    );
+                  }).toList(),
+                );
+              },
             ),
           ],
         ),
+          );
+        },
       ),
     );
   }
